@@ -46,34 +46,38 @@ def base_process(data):
     print("========================item==========================")
     # Divided into different category levels and LabelEncoder()
     '''
-        item_id, item_category_list, item_property_list, item_brand_id, item_city_id,
-        item_price_level, item_sales_level, item_collected_level, item_pv_level
-        '''
+    item_id, item_category_list, item_property_list, item_brand_id, item_city_id, 
+    item_price_level, item_sales_level, item_collected_level, item_pv_level
+    '''
     for i in range(1, 3):
         data['item_category_list' + str(i)] = lbl.fit_transform(data['item_category_list'].map(
-                                                                                               lambda x: str(str(x).split(';')[i]) if len(str(x).split(';')) > i else ''))
-    del data['item_category_list']
+            lambda x: str(str(x).split(';')[i]) if len(str(x).split(';')) > i else 'missing'))
+    del data['item_category_list'] 
+        
+    # for i in range(10):
+    #     data['item_property_list' + str(i)] = lbl.fit_transform(data['item_property_list'].map(
+    #         lambda x: str(str(x).split(';')[i]) if len(str(x).split(';')) > i else ''))
+    # del data['item_property_list']
+    train_item_property = data['item_property_list'].str.split(';', expand=True).add_prefix('item_property_')
+    train_item_property.fillna('missing', inplace=True)
+    train_item_property = lbl.fit_transform(train_item_property)
+    data = pd.concat([data, train_item_property], axis=1)
 
-for i in range(10):
-    data['item_property_list' + str(i)] = lbl.fit_transform(data['item_property_list'].map(
-                                                                                           lambda x: str(str(x).split(';')[i]) if len(str(x).split(';')) > i else ''))
-                                                                                           del data['item_property_list']
-                                                                                           
-                                                                                           for col in ['item_id', 'item_brand_id', 'item_city_id']:
-                                                                                               data[col] = lbl.fit_transform(data[col])
-
-# Fill none with mean
-data['item_sales_level'][data.item_sales_level==-1] = None;
+    for col in ['item_id', 'item_brand_id', 'item_city_id']:
+        data[col] = lbl.fit_transform(data[col])
+    
+    # Fill none with mean
+    data['item_sales_level'][data.item_sales_level==-1] = None
     data['item_sales_level'].fillna(data['item_sales_level'].mean(), inplace=True)
     
     
     print("========================user==========================")
     # user_gender_id and user_occupation_id should be handled with one-hot
-    data[data.user_age_level==-1]['user_age_level'] = None;
+    data[data.user_age_level==-1]['user_age_level'] = None
     data['user_age_level'].fillna(data['user_age_level'].mode())
     data['user_age_level'] = data['user_age_level'].apply(lambda x: x%1000)
     
-    data[data.user_star_level==-1]['user_star_level'] = None;
+    data[data.user_star_level==-1]['user_star_level'] = None
     data['user_star_level'].fillna(data['user_star_level'].mean())
     data['user_star_level'] = data['user_star_level'].apply(lambda x: x%3000)
     
@@ -83,21 +87,21 @@ data['item_sales_level'][data.item_sales_level==-1] = None;
     
     for i in range(5):
         data['predict_category_property' + str(i)] = lbl.fit_transform(data['predict_category_property'].map(
-                                                                                                             lambda x: str(str(x).split(';')[i]) if len(str(x).split(';')) > i else ''))
-    del data['predict_category_property']
-
-print("=====================shop===============================")
-    data['shop_score_service'][data.shop_score_service==-1] = None;
+            lambda x: str(str(x).split(';')[i]) if len(str(x).split(';')) > i else ''))
+    del data['predict_category_property'] 
+        
+    print("=====================shop===============================")
+    data['shop_score_service'][data.shop_score_service==-1] = None
     data['shop_score_service'].fillna(data['shop_score_service'].mean(), inplace=True)
     
-    data['user_age_level'][data.user_age_level==-1] = None;
+    data['user_age_level'][data.user_age_level==-1] = None
     data['shop_score_delivery'].fillna(data['shop_score_delivery'].mean(), inplace=True)
     
-    data['shop_score_description'][data.shop_score_description==-1] = None;
+    data['shop_score_description'][data.shop_score_description==-1] = None
     data['shop_score_description'].fillna(data['shop_score_description'].mean(), inplace=True)
     
     return data
-
+    
 
 if __name__ == "__main__":
     start = time.time()
