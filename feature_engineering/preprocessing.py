@@ -32,7 +32,7 @@ test_file = 'round1_ijcai_18_test_a_20180301.txt'
 def date_convert(data):
     # Transform into datetime format
     data['time'] = pd.to_datetime(data.context_timestamp, unit='s')
-    
+
     # transform into Beijing datetime format
     data['realtime'] = data['time'].apply(lambda x: x + datetime.timedelta(hours=8))
     data['day'] = data['realtime'].dt.day
@@ -42,7 +42,6 @@ def date_convert(data):
 
 def base_process(data):
     lbl = preprocessing.LabelEncoder()
-    print(data.columns)
     print("========================item==========================")
     # Divided into different category levels and LabelEncoder()
     '''
@@ -54,14 +53,14 @@ def base_process(data):
             lambda x: str(str(x).split(';')[i]) if len(str(x).split(';')) > i else 'missing'))
     del data['item_category_list'] 
         
-    # for i in range(10):
-    #     data['item_property_list' + str(i)] = lbl.fit_transform(data['item_property_list'].map(
-    #         lambda x: str(str(x).split(';')[i]) if len(str(x).split(';')) > i else ''))
-    # del data['item_property_list']
-    train_item_property = data['item_property_list'].str.split(';', expand=True).add_prefix('item_property_')
-    train_item_property.fillna('missing', inplace=True)
-    train_item_property = lbl.fit_transform(train_item_property)
-    data = pd.concat([data, train_item_property], axis=1)
+    for i in range(10):
+        data['item_property_list' + str(i)] = lbl.fit_transform(data['item_property_list'].map(
+            lambda x: str(str(x).split(';')[i]) if len(str(x).split(';')) > i else ''))
+    del data['item_property_list']
+    # train_item_property = data['item_property_list'].str.split(';', expand=True).add_prefix('item_property_')
+    # train_item_property.fillna('missing', inplace=True)
+    # train_item_property = lbl.fit_transform(train_item_property)
+    # data = pd.concat([data, train_item_property], axis=1)
 
     for col in ['item_id', 'item_brand_id', 'item_city_id']:
         data[col] = lbl.fit_transform(data[col])
@@ -113,14 +112,14 @@ if __name__ == "__main__":
     print("Start doing preprocessing")
     df = base_process(df)
     dump_pickle(df, path=raw_data_path + 'df.pkl')
-    
-    train = df[(df['day'] >= 18) & (df['day'] <= 23)]
-    valid = df[(df['day'] == 24)]
-    dump_pickle(train, path=raw_data_path + 'train.pkl')
-    dump_pickle(valid, path=raw_data_path + 'valid.pkl')
-    
-    test = df.iloc[len_train:]
-    dump_pickle(test, path=raw_data_path + 'test.pkl')
+    print(df.day.unique())
+    # train = df[(df['day'] >= 18) & (df['day'] <= 23)]
+    # valid = df[(df['day'] == 24)]
+    # dump_pickle(train, path=raw_data_path + 'train.pkl')
+    # dump_pickle(valid, path=raw_data_path + 'valid.pkl')
+    #
+    # test = df.iloc[len_train:]
+    # dump_pickle(test, path=raw_data_path + 'test.pkl')
     
     end = time.time()
     print("Preprocessing done and time elapsed %s" % (end-start))
