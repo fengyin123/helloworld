@@ -53,6 +53,7 @@ for col in tqdm(smooth_cols):
     smooth_test = pd.merge(smooth_test, CVR_all[[col, 'day', col_smooth_rate]], on=[col, 'day'], how='left')
 
 smooth_all = pd.concat([smooth_train, smooth_test], axis=1)
+smooth_all.drop(smooth_cols + ['day'], axis=1, inplace=True)
 dump_pickle(smooth_all, path=raw_data_path+'102_smooth_features.pkl')
 
 

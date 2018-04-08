@@ -56,5 +56,17 @@ for col in tqdm(cols):
 dump_pickle(final_feat, path=raw_data_path + '103_diff_max_min.pkl')
 
 
-
-
+# ================================= 当前日期前一天的cnt ===========================================
+count_features = ['user_id', 'item_id', 'shop_id']
+final_feat = df[count_features+['day']]
+for col in count_features:
+    count_name = '{}_lastday_count'.format(col)
+    count_all = None
+    for d in range(18, 24):
+        col_cnt = df[df['day'] == d - 1].groupby(by=col)['instance_id'].count().reset_index()
+        col_cnt.columns = [col, count_name]
+        col_cnt['day'] = d
+        count_all = pd.concat([count_all, col_cnt], axis=0)
+    final_feat = pd.merge(final_feat, count_all, on=[col, 'day'], how='left')
+final_feat = final_feat.drop(count_features+['day'], axis=1)
+dump_pickle(final_feat, path=raw_data_path + '103_last_day_count.pkl')
