@@ -24,7 +24,6 @@ def time_discrete(hour):
 
 
 final_feat['time_discrete'] = df['hour'].map(time_discrete)
-
-time_discrete_visit_count = pd.crosstab(index=final_feat['user_id'], columns=final_feat['time_discrete']).add_suffix('visit_count')
-time_discrete_trade_count = pd.crosstab(index=final_feat['user_id'], columns=final_feat['time_discrete']).add_suffix('visit_count')
-print(time_discrete_count)
+time_discrete_visit_count = pd.crosstab(index=final_feat['user_id'], columns=final_feat['time_discrete']).add_suffix('_visit_count').reset_index()
+final_feat = pd.merge(final_feat, time_discrete_visit_count, on='user_id', how='left')
+dump_pickle(final_feat, path=raw_data_path+'104_user_visit_time.pkl')
