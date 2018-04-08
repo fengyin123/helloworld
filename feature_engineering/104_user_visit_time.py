@@ -1,4 +1,3 @@
-# 计算出至今为止用户买的产品数
 from utils import BayesianSmoothing, load_pickle, dump_pickle, raw_data_path
 import gc
 import numpy as np
@@ -9,7 +8,7 @@ from collections import defaultdict
 df = load_pickle('../data/df.pkl')
 final_feat = pd.DataFrame({'instance_id': df.instance_id, 'user_id': df.user_id})
 
-
+# 将时间离散成早中晚，并且计算早中晚的浏览总次数
 def time_discrete(hour):
     if 0 < hour <= 6:
         return 'midnight'
