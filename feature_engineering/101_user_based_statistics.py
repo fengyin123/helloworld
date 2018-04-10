@@ -1,3 +1,4 @@
+# %load 101_user_based_statistics.py
 import gc
 import numpy as np
 import pandas as pd
@@ -53,24 +54,22 @@ def generate_basic_feats(df, feat_df):
     '''
     for user_col in tqdm(user_cols):
         # statistic feature
-        stats_list = []
         for grade_col in tqdm(grade_cols):
             the_stats = get_stats_target(df, user_col, grade_col, drop_raw_col=False)
-            stats_list.append(the_stats)
-
-            feat_df = pd.concat([feat_df, pd.merge(df, stats_list, on=user_col).iloc[:, -1]], axis=1)
+            #stats_list = pd.concat([stats_list, the_stats], axis=1)
+            tmp_df = pd.merge(df, the_stats, on=user_col)
+            feat_df = pd.concat([feat_df, tmp_df.drop(df_cols, axis=1)] , axis=1)
 
     # ========================== 计算每个用户下的category2的个数 =========================
     '''
     如：对于每个男性用户，他所浏览的各种category2的数量
     '''
-    category_df = df[['user_id'] + ['item_category_list2']]
     for user_col in tqdm(user_cols):
         # category and property columns
-        category_cnt = category_df.groupby(user_col)['item_category_list2'].nunique().reset_index()
-        category_cnt.columns = ['user_id', '{category2_groupby_{}_cnt' % user_col]
-
-        feat_df = pd.concat([feat_df, pd.merge([df, category_cnt], how='left', on='user_id').iloc[:, -1]], axis=1)
+        category_cnt = df.groupby(user_col)['item_category_list2'].nunique().reset_index()
+        category_cnt.columns = [user_col, 'category2_groupby_{}_cnt'.format(user_col)]
+        tmp_df = pd.merge(df, category_cnt, how='left', on=user_col)
+        feat_df = pd.concat([feat_df, tmp_df.drop(df_cols, axis=1)], axis=1)
 
         del category_cnt
         gc.collect()
@@ -93,16 +92,3 @@ test_feat = generate_basic_feats(test, test_feat)
 
 dump_pickle(train, raw_data_path + 'train/' + '101_user_based_statistics.pkl')
 dump_pickle(test, raw_data_path + 'test/' + '101_user_based_statistics.pkl')
-
-
-
-
-
-
-
-
-
-
-
-
-
