@@ -53,12 +53,12 @@ def base_process(data):
             lambda x: str(str(x).split(';')[i]) if len(str(x).split(';')) > i else 'missing'))
     del data['item_category_list'] 
         
-    for i in range(10):
-        data['item_property_list' + str(i)] = lbl.fit_transform(data['item_property_list'].map(
-            lambda x: str(str(x).split(';')[i]) if len(str(x).split(';')) > i else ''))
-    del data['item_property_list']
-    # train_item_property = data['item_property_list'].str.split(';', expand=True).add_prefix('item_property_')
-    # train_item_property.fillna('missing', inplace=True)
+    # for i in range(10):
+    #     data['item_property_list' + str(i)] = lbl.fit_transform(data['item_property_list'].map(
+    #         lambda x: str(str(x).split(';')[i]) if len(str(x).split(';')) > i else ''))
+    # del data['item_property_list']
+    data_item_property = data['item_property_list'].str.split(';', expand=True).add_prefix('item_property_')
+    data_item_property.fillna('missing', inplace=True)
     # train_item_property = lbl.fit_transform(train_item_property)
     # data = pd.concat([data, train_item_property], axis=1)
 
@@ -106,21 +106,22 @@ if __name__ == "__main__":
     start = time.time()
     print("Load Data")
     train = pd.read_table(path + train_file, encoding='utf8', delim_whitespace=True)
-    test = pd.read_table(path + train_file, encoding='utf8', delim_whitespace=True)
+    test = pd.read_table(path + test_file, encoding='utf8', delim_whitespace=True)
     len_train = train.shape[0]
     df = pd.concat([train, test], axis=0, ignore_index=True)
     print("Start doing preprocessing")
     df = base_process(df)
     dump_pickle(df, path=raw_data_path + 'df.pkl')
     print(df.day.unique())
+    train = df[df['day']<=24]
     # train = df[(df['day'] >= 18) & (df['day'] <= 23)]
     # valid = df[(df['day'] == 24)]
-    # dump_pickle(train, path=raw_data_path + 'train.pkl')
+    dump_pickle(train, path=raw_data_path + 'train.pkl')
     # dump_pickle(valid, path=raw_data_path + 'valid.pkl')
-    #
-    # test = df.iloc[len_train:]
-    # dump_pickle(test, path=raw_data_path + 'test.pkl')
-    
+
+    test = df.iloc[len_train:]
+    dump_pickle(test, path=raw_data_path + 'test.pkl')
+
     end = time.time()
     print("Preprocessing done and time elapsed %s" % (end-start))
 

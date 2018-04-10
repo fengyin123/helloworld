@@ -6,10 +6,12 @@ from tqdm import tqdm
 
 train = load_pickle('../data/train.pkl')
 test = load_pickle('../data/test.pkl')
-df = load_pickle('../data/train.pkl')
+df = load_pickle('../data/df.pkl')
+
+print(test.day.value_counts())
 # train = pd.concat([train, test])
 
-iter_num = 1
+iter_num = 200
 epsilon = 0.001
 '''
 1. 定义需要计算平滑点击率的变量

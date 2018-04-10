@@ -30,7 +30,9 @@ dump_pickle(user_time_df, path=raw_data_path+'103_user_time_count.pkl')
 
 # ======================== 用户当前搜索距离上次的时间 ================================================
 df_tmp = df[['instance_id', 'user_id',  'context_timestamp']].copy()
-df_tmp.sort_values(['instance_id', 'user_id', 'context_timestamp'], inplace=True)
+df_tmp.sort_values(['user_id', 'context_timestamp'], inplace=True)
+print(df_tmp.head(50))
+
 
 df_tmp['t-1_context_timestamp'] = df_tmp.groupby('user_id')['context_timestamp'].shift(1)
 df_tmp['time_diff_last_query'] = np.log1p(df_tmp['context_timestamp'] - df_tmp['t-1_context_timestamp'])
@@ -70,3 +72,5 @@ for col in count_features:
     final_feat = pd.merge(final_feat, count_all, on=[col, 'day'], how='left')
 final_feat = final_feat.drop(count_features+['day'], axis=1)
 dump_pickle(final_feat, path=raw_data_path + '103_last_day_count.pkl')
+
+

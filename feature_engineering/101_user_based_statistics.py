@@ -5,24 +5,18 @@ from tqdm import tqdm
 
 train = pd.read_pickle('../data/train.pkl')
 test = pd.read_pickle('../data/test.pkl')
-df = pd.concat([train, test])
+df = pd.read_pickle('../data/df.pkl')
 
+train_feat = pd.DataFrame({'instance_id': train.instance_id})
+test_feat = pd.DataFrame({'instance_id': test.instance_id})
 
 user_cols = ['user_id', 'user_gender_id', 'user_age_level', 'user_occupation_id', 'user_star_level']
 id_cols = ['instance_id', 'item_id', 'item_brand_id', 'item_city_id', 'shop_id']
-
+df_cols = df.columns
 # grade_cols = ['item_price_level', 'item_sales_level', 'item_collected_level', 'item_pv_level', 'shop_review_num_level',
 #               'shop_review_positive_rate', 'shop_star_level', 'shop_score_service', 'shop_score_delivery', 'shop_score_description']
 grade_cols = ['item_price_level']
 
-# ============================= count features for id features =====================
-for user_col in tqdm(user_cols):
-    cnt_result = df.groupby(user_col)[id_cols].nunique()
-    cnt_result = cnt_result.add_prefix(user_col + '_').add_suffix('_cnt')
-    cnt_result = cnt_result.reset_index()
-    df = pd.merge(df, cnt_result, on=user_col, how='left')
-
-# ============================ statistic features for grade features ========================
 def get_stats_target(df, group_column, target_column, drop_raw_col=False):
     df_old = df.copy()
     grouped = df_old.groupby(group_column)
@@ -40,36 +34,60 @@ def get_stats_target(df, group_column, target_column, drop_raw_col=False):
 
     return the_stats
 
-for user_col in tqdm(user_cols):
-    # statistic feature
-    stats_list = []
-    for grade_col in tqdm(grade_cols):
-        the_stats = get_stats_target(df, user_col, grade_col, drop_raw_col=False)
-        stats_list.append(the_stats)
+def generate_basic_feats(df, feat_df):
 
-    df = pd.merge(df, stats_list, on=user_col)
+    # ============================= 计算关于用户特征的id类特征的数量 =====================
+    '''
+    如：男性用户中浏览的item_id的种类有多少
+    '''
+    for user_col in tqdm(user_cols):
+        cnt_result = df.groupby(user_col)[id_cols].nunique()
+        cnt_result = cnt_result.add_prefix(user_col + '_').add_suffix('_cnt')
+        cnt_result = cnt_result.reset_index()
+        feat_df[user_col + '_count'] = pd.merge(df, cnt_result, on=user_col, how='left').iloc[:, -1].values
+
+    # ============================ 计算关于用户特征的得分类特征的统计特征 ========================
+    '''
+    如：男性用户中item_price_level的平均数，中位数，最大值，最小值
+    '''
+    for user_col in tqdm(user_cols):
+        # statistic feature
+        stats_list = []
+        for grade_col in tqdm(grade_cols):
+            the_stats = get_stats_target(df, user_col, grade_col, drop_raw_col=False)
+            stats_list.append(the_stats)
+
+            feat_df = pd.concat([feat_df, pd.merge(df, stats_list, on=user_col).iloc[:, -1]], axis=1)
+
+    # ========================== 计算每个用户下的category2的个数 =========================
+    '''
+    如：男性用户
+    '''
+    category_df = df[['user_id'] + ['item_category_list2']]
+    for user_col in tqdm(user_cols):
+        # category and property columns
+        category_cnt = category_df.groupby(user_col)['item_category_list2'].nunique().reset_index()
+        category_cnt.columns = ['user_id', '{category2_groupby_{}_cnt' % user_col]
+
+        feat_df = pd.concat([feat_df, pd.merge([df, category_cnt], how='left', on='user_id').iloc[:, -1]], axis=1)
+
+        del category_cnt
+        gc.collect()
+
+    # ======================== 计算每个用户特征下分别有多少用户 ===================================
+    for user_col in tqdm(user_cols):
+        if user_col == 'user_id':
+            continue
+        else:
+            tmp_groupby_cnt = category_df.groupby(user_col)['user_id'].nunique().reset_index()
+            tmp_groupby_cnt.columns = [user_col, 'id_groupby_{}_cnt'.format(user_col)]
+            df = pd.merge([df, tmp_groupby_cnt], how='left', on=user_col)
 
 
-# ========================== count features for category features =========================
-category_df = df[['user_id'] + ['item_category_list{}'.format(i) for i in range(1, 3)]]
-for user_col in tqdm(user_cols):
-    # category and property columns
-    category_cnt = category_df.groupby('user_id')['item_category_list1'].nunique().to_frame()
-    category_cnt.columns = ['{category_groupby_{}_cnt' % user_col]
 
-    df = pd.merge([df, category_cnt], how='left', on='user_id')
 
-    del category_cnt
-    gc.collect()
 
-# ======================== count features for instances ===================================
-for user_col in tqdm(user_cols):
-    if user_col == 'user_id':
-        continue
-    else:
-        tmp_groupby_cnt = category_df.groupby(user_col)['user_id'].nunique().reset_index()
-        tmp_groupby_cnt.columns = [user_col, 'id_groupby_{}_cnt'.format(user_col)]
-        df = pd.merge([df, tmp_groupby_cnt], how='left', on=user_col)
+
 
 
 
