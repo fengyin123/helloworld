@@ -2,6 +2,7 @@ import gc
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
+from utils import BayesianSmoothing, load_pickle, dump_pickle, raw_data_path
 
 train = pd.read_pickle('../data/train.pkl')
 test = pd.read_pickle('../data/test.pkl')
@@ -38,7 +39,7 @@ def generate_basic_feats(df, feat_df):
 
     # ============================= 计算关于用户特征的id类特征的数量 =====================
     '''
-    如：男性用户中浏览的item_id的种类有多少
+    如：对于每个男性用户, 他所浏览的各种item_id的数量
     '''
     for user_col in tqdm(user_cols):
         cnt_result = df.groupby(user_col)[id_cols].nunique()
@@ -61,7 +62,7 @@ def generate_basic_feats(df, feat_df):
 
     # ========================== 计算每个用户下的category2的个数 =========================
     '''
-    如：男性用户
+    如：对于每个男性用户，他所浏览的各种category2的数量
     '''
     category_df = df[['user_id'] + ['item_category_list2']]
     for user_col in tqdm(user_cols):
@@ -74,18 +75,24 @@ def generate_basic_feats(df, feat_df):
         del category_cnt
         gc.collect()
 
-    # ======================== 计算每个用户特征下分别有多少用户 ===================================
-    for user_col in tqdm(user_cols):
-        if user_col == 'user_id':
-            continue
-        else:
-            tmp_groupby_cnt = category_df.groupby(user_col)['user_id'].nunique().reset_index()
-            tmp_groupby_cnt.columns = [user_col, 'id_groupby_{}_cnt'.format(user_col)]
-            df = pd.merge([df, tmp_groupby_cnt], how='left', on=user_col)
+    return feat_df
+    # # ======================== 计算每个用户特征下分别有多少用户 ===================================
+    # '''
+    #     如：对于每个男性用户，他所浏览的各种category2的数量
+    # '''
+    # for user_col in tqdm(user_cols):
+    #     if user_col == 'user_id':
+    #         continue
+    #     else:
+    #         tmp_groupby_cnt = category_df.groupby(user_col)['user_id'].nunique().reset_index()
+    #         tmp_groupby_cnt.columns = [user_col, 'id_groupby_{}_cnt'.format(user_col)]
+    #         df = pd.merge([df, tmp_groupby_cnt], how='left', on=user_col)
 
+train_feat = generate_basic_feats(train, train_feat)
+test_feat = generate_basic_feats(test, test_feat)
 
-
-
+dump_pickle(train, raw_data_path + 'train/' + '101_user_based_statistics.pkl')
+dump_pickle(test, raw_data_path + 'test/' + '101_user_based_statistics.pkl')
 
 
 
