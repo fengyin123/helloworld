@@ -10,26 +10,33 @@ def read_pickles(path, col=None):
         df = pd.concat([pd.read_pickle(f)[col] for f in tqdm(sorted(glob(path+'/*.pkl')))])
     return df
 
-train = load_pickle('../data/train.pkl')
-test = load_pickle('../data/test.pkl')
+def data_split():
+    train = load_pickle('../data/train.pkl')
+    test = load_pickle('../data/test.pkl')
 
-train_feats = read_pickles('../data/train/')
-test_feats = read_pickles('../data/test')
+    train_feats = read_pickles('../data/train/')
+    test_feats = read_pickles('../data/test')
 
-train = train.merge(train_feats, on='instance_id', how='left')
-test = test.merge(test_feats, on='instance_id', how='left')
+    train = train.merge(train_feats, on='instance_id', how='left')
+    test = test.merge(test_feats, on='instance_id', how='left')
 
-drop_columns = ['time', 'realtime']
-train.drop(drop_columns, axis=1, inplace=True)
-test.drop(drop_columns, axis=1, inplace=True)
+    drop_columns = ['time', 'realtime']
+    train.drop(drop_columns, axis=1, inplace=True)
+    test.drop(drop_columns, axis=1, inplace=True)
 
-def train_valid_split(data):
-    train_df = data[data.day<24].copy()
-    train_df = handle_imbalance(train_df)
-    valid_df = data[data.day==24].copy
 
-    dump_pickle(train_df, path='train_final.pkl')
-    dump_pickle(valid_df, path='')
+    train_df = train[train.day<24].copy()
+    #train_df = handle_imbalance(train_df)
+    valid_df = train[train.day==24].copy
+    test_df = test
+
+    dump_pickle(train_df, path='../data/train/train_final.pkl')
+    dump_pickle(valid_df, path='../data/valid/valid_final.pkl')
+    dump_pickle(test_df, path='../data/test/test_final.pkl')
+
+def data_onehot():
+
+
 
 
 

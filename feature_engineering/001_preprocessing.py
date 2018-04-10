@@ -90,5 +90,5 @@ def generate_basic_feats(df, feat_df):
 train_feat = generate_basic_feats(train, train_feat)
 test_feat = generate_basic_feats(test, test_feat)
 
-dump_pickle(train, raw_data_path + 'train/' + '101_user_based_statistics.pkl')
-dump_pickle(test, raw_data_path + 'test/' + '101_user_based_statistics.pkl')
+dump_pickle(train, raw_data_path + 'train_feature/' + '101_user_based_statistics.pkl')
+dump_pickle(test, raw_data_path + 'test_feature/' + '101_user_based_statistics.pkl')
