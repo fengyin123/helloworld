@@ -1,4 +1,5 @@
 # %load 101_user_based_statistics.py
+#encoding:utf-8
 import gc
 import numpy as np
 import pandas as pd
