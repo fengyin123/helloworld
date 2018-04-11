@@ -60,3 +60,17 @@ class BayesianSmoothing(object):
 
 
         return alpha * (numerator_alpha / denominator), beta * (numerator_beta / denominator)
+    
+def cal_log_loss(predict_list, valid_list):
+    if len(predict_list) != len(valid_list):
+        return -1
+    loss = 0
+    for predict_label, valid_label in zip(predict_list, valid_list):
+        if predict_label <= 0:
+            predict_label = 0.00000000001
+        if predict_label >= 1:
+            predict_label = 0.99999999999
+        loss += (valid_label*math.log(predict_label)+(1-valid_label)*math.log(1-predict_label))
+    return -loss/(len(predict_list))
+
+
