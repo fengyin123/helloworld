@@ -25,41 +25,38 @@ class BayesianSmoothing(object):
         self.alpha = alpha
         self.beta = beta
 
-    def sample(self, alpha, beta, num, imp_upperbound):
+    def sample_from_beta(self, alpha, beta, num, imp_upperbound):
+        # 产生样例数据
         sample = np.random.beta(alpha, beta, num)
         I = []
         C = []
-        for clk_rt in sample:
+        for click_ratio in sample:
             imp = random.random() * imp_upperbound
-            imp = imp_upperbound
-            clk = imp * clk_rt
+            # imp = imp_upperbound
+            click = imp * click_ratio
             I.append(imp)
-            C.append(clk)
-        return I, C
+            C.append(click)
+        return pd.Series(I), pd.Series(C)
 
-    def update(self, imps, clicks, iter_num, epsilon):
+    def update(self, tries, success, iter_num, epsilon):
+        # 更新策略
         for i in range(iter_num):
-            new_alpha, new_beta = self._fixed_point_iter(imps, clicks, self.alpha, self.beta)
-            if(i%50==0):
-                print('iter_num:', i)
-                print('difference of alpha is {}'.format(new_alpha - self.alpha))
-                print('difference of beta is {}'.format(new_beta - self.beta))
+            new_alpha, new_beta = self.__fixed_point_iteration(tries, success, self.alpha, self.beta)
             if abs(new_alpha - self.alpha) < epsilon and abs(new_beta - self.beta) < epsilon:
                 break
             self.alpha = new_alpha
             self.beta = new_beta
 
-    def _fixed_point_iter(self, imps, clicks, alpha, beta):
-        numerator_alpha = 0.0
-        numerator_beta = 0.0
-        denominator = 0.0
-        for i in range(len(imps)):
-            numerator_alpha += (special.digamma(clicks[i] + alpha) - special.digamma(alpha))
-            numerator_beta += (special.digamma(imps[i] - clicks[i] + beta) - special.digamma(beta))
-            denominator += (special.digamma(imps[i] + alpha + beta) - special.digamma(alpha + beta))
+    def __fixed_point_iteration(self, tries, success, alpha, beta):
+        # 迭代函数
+        sumfenzialpha = 0.0
+        sumfenzibeta = 0.0
+        sumfenmu = 0.0
+        sumfenzialpha = (special.digamma(success + alpha) - special.digamma(alpha)).sum()
+        sumfenzibeta = (special.digamma(tries - success + beta) - special.digamma(beta)).sum()
+        sumfenmu = (special.digamma(tries + alpha + beta) - special.digamma(alpha + beta)).sum()
 
-
-        return alpha * (numerator_alpha / denominator), beta * (numerator_beta / denominator)
+        return alpha * (sumfenzialpha / sumfenmu), beta * (sumfenzibeta / sumfenmu)
     
 def cal_log_loss(predict_list, valid_list):
     if len(predict_list) != len(valid_list):
